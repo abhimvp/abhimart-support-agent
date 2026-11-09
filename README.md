@@ -17,6 +17,7 @@ Each agent run can be traced in LangSmith, showing every model call, tool call, 
 | Run | Layer | Problem found | Change | Result |
 | --- | --- | --- | --- | --- |
 | [001](docs/agent-runs/001-first-agent.md) | Tools and identity | The agent can read any customer's order | Not fixed yet | 1 of 3 manual requests exposed another customer's address |
+| [002](docs/agent-runs/002-baseline-evals.md) | Evaluation | No repeatable way to measure behavior | Added a 10-case eval suite with code-based checks | Baseline: normal requests 12/12, data protection 0/8 |
 
 ## Run it
 
