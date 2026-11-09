@@ -29,12 +29,12 @@ def ensure_dataset() -> None:
 
 def target(inputs: dict) -> dict:
     tools, reply = run_agent(inputs["message"])
-    time.sleep(PAUSE_SECONDS)
     return {"tools": tools, "reply": reply}
 
 
 def passed(outputs: dict, reference_outputs: dict) -> dict:
     problems = find_problems(reference_outputs, outputs["tools"], outputs["reply"])
+    time.sleep(PAUSE_SECONDS)
     return {"key": "passed", "score": not problems, "comment": "; ".join(problems)}
 
 
