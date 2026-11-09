@@ -28,14 +28,20 @@ def ensure_dataset() -> None:
 
 
 def target(inputs: dict) -> dict:
+    start = time.perf_counter()
     tools, reply = run_agent(inputs["message"])
-    return {"tools": tools, "reply": reply}
+    seconds = time.perf_counter() - start
+    time.sleep(PAUSE_SECONDS)
+    return {"tools": tools, "reply": reply, "seconds": seconds}
 
 
 def passed(outputs: dict, reference_outputs: dict) -> dict:
     problems = find_problems(reference_outputs, outputs["tools"], outputs["reply"])
-    time.sleep(PAUSE_SECONDS)
     return {"key": "passed", "score": not problems, "comment": "; ".join(problems)}
+
+
+def agent_seconds(outputs: dict) -> dict:
+    return {"key": "agent_seconds", "score": outputs["seconds"]}
 
 
 if __name__ == "__main__":
@@ -43,7 +49,7 @@ if __name__ == "__main__":
     client.evaluate(
         target,
         data=DATASET_NAME,
-        evaluators=[passed],
+        evaluators=[passed, agent_seconds],
         experiment_prefix="baseline",
         num_repetitions=REPEATS,
         max_concurrency=1,
