@@ -28,3 +28,5 @@ Requires Docker, uv and a Gemini API key.
     uv run alembic upgrade head
     uv run python -m app.seed
     uv run python -W ignore -m app.agent "Where is my order 1043?"
+
+See [docs/commands.md](docs/commands.md) for every command and what it does.
