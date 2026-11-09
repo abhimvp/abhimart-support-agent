@@ -2,7 +2,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductRead(BaseModel):
@@ -34,3 +34,14 @@ class OrderRead(BaseModel):
     shipped_at: datetime | None
     delivered_at: datetime | None
     items: list[OrderItemRead]
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=2000)
+
+
+# The length limit stops someone sending a huge message that you’d pay tokens for.
+
+
+class ChatResponse(BaseModel):
+    reply: str

@@ -16,6 +16,20 @@ The agent used its tool only when it needed order data. It answered a general qu
 
 The third run is the serious one. It returned a home address from an order belonging to a different customer, with no refusal or warning. From the outside, this looks like a success: the tool ran, no error occurred, and the reply was accurate and polite. Checking only for errors or correct answers would not catch it.
 
+## What the LangSmith trace showed
+
+For the third request, the whole run took 10.09 seconds:
+
+| Step | Time | Tokens |
+| --- | --- | --- |
+| First model call (choose the tool) | 9.29 s | 125 |
+| `lookup_order` tool | 0.09 s | n/a |
+| Second model call (write the reply) | 0.63 s | 367 |
+
+- The tool's full JSON result, including the other customer's address, reached the model before it replied. Filtering the reply afterwards would be too late, so the check has to happen before the tool returns data.
+- The tool returns the whole order even when the question needs one field, which adds tokens and exposes more data than necessary.
+- The first model call was far slower than the second despite using fewer tokens. One trace is not enough to explain that. Provider latency or a retry are possible causes.
+
 ## Why it happened
 
 The agent has no idea who it is talking to. `lookup_order` accepts any order number, and `get_order` filters only by order ID, so no customer identity reaches the query at any point.

@@ -8,7 +8,10 @@ from sqlalchemy.orm import Session
 from app.db import engine, get_session
 from app.models import Order
 from app.order_service import OrderNotFound, get_order
-from app.schemas import OrderRead
+from app.schemas import ChatRequest, ChatResponse, OrderRead
+from app.agent import graph
+
+from langchain_core.messages import HumanMessage
 
 app = FastAPI(title="abhimart support agent")
 
@@ -36,3 +39,12 @@ def read_order(
         return get_order(session, order_id)
     except OrderNotFound:
         raise HTTPException(status_code=404, detail="order not found")
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> ChatResponse:
+    result = graph.invoke(
+        {"messages": [HumanMessage(request.message)]},
+        {"recursion_limit": 5},
+    )
+    return ChatResponse(reply=result["messages"][-1].text)
