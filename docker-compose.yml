@@ -1,0 +1,20 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    # command: ["postgres", "-c", "log_statement=all"]
+    environment:
+      POSTGRES_USER: abhimart
+      POSTGRES_PASSWORD: abhimart
+      POSTGRES_DB: abhimart
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abhimart -d abhimart"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
