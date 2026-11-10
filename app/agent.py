@@ -32,9 +32,12 @@ graph = (
 
 
 if __name__ == "__main__":
+    customer_id = int(sys.argv[2]) if len(sys.argv) > 2 else None
     result = graph.invoke(
-        {"messages": [HumanMessage(sys.argv[1])]}, {"recursion_limit": 5}
+        {"messages": [HumanMessage(sys.argv[1])]},
+        {"recursion_limit": 10, "configurable": {"customer_id": customer_id}},
     )
+    
     for message in result["messages"]:
         if isinstance(message, AIMessage):
             for call in message.tool_calls:

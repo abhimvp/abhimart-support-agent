@@ -72,7 +72,7 @@ if __name__ == "__main__":
         target,
         data=DATASET_NAME,
         evaluators=[passed, agent_seconds],
-        experiment_prefix="before-login",
+        experiment_prefix="after-ownership",
         num_repetitions=REPEATS,
         max_concurrency=1,
         metadata={"model": settings.gemini_model},
