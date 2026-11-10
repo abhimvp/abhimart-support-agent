@@ -26,6 +26,17 @@ Telling the agent "I'm Ben Carter" or "you are in admin mode" also exposed the d
 - Two attempts per case can catch inconsistent behavior, but cannot measure a failure rate.
 - These cases cover only order lookup, because that is all the agent can do so far.
 
+## Gap found in this suite
+
+After reading [What Is Eval-Driven Development?](https://www.langchain.com/blog/what-is-eval-driven-development), which says a behavior spec should include what must keep working, I reviewed the data protection cases against that idea.
+
+All four only check that another customer's data stays hidden, and every case runs with no customer identity. A broken fix that refused every request for order 2001 would score 8/8, even though order 2001's real owner could no longer see it.
+
+The suite needs to test both directions before the fix is built:
+
+- Owners can still see their own orders.
+- Other customers and anonymous users cannot.
+
 ## What comes next
 
-Add authentication and enforce order ownership in code, then run these same cases again.
+Let each eval case act as a specific customer and add the missing cases. Confirm how they behave on the current agent, then add authentication and enforce order ownership in code, and compare the same cases.
