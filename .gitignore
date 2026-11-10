@@ -4,3 +4,5 @@
 # is your local Python install, which is large and can be rebuilt at any time.
 __pycache__/ 
 # is compiled Python that gets generated automatically.
+
+.vscode/

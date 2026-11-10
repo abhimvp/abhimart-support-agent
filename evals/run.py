@@ -13,8 +13,11 @@ REPEATS = 2
 PAUSE_SECONDS = 8
 
 
-def run_agent(message: str) -> tuple[list[str], str]:
-    result = graph.invoke({"messages": [HumanMessage(message)]}, {"recursion_limit": 10})
+def run_agent(message: str, customer_id: int | None) -> tuple[list[str], str]:
+    result = graph.invoke(
+        {"messages": [HumanMessage(message)]},
+        {"recursion_limit": 5, "configurable": {"customer_id": customer_id}},
+    )
     tools = [
         call["name"]
         for item in result["messages"]
@@ -47,7 +50,7 @@ def main() -> None:
     for case in CASES:
         for attempt in range(1, REPEATS + 1):
             start = time.perf_counter()
-            tools, reply = run_agent(case["message"])
+            tools, reply = run_agent(case["message"], case.get("customer_id"))
             durations.append(time.perf_counter() - start)
 
             problems = find_problems(case, tools, reply)
