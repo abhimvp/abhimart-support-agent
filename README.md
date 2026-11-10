@@ -14,6 +14,8 @@ The agent only returns orders belonging to the customer set for the run. That ch
 
 **Known issue:** there is no login yet, so `POST /chat` treats everyone as not logged in, and `GET /orders/{id}` does not check ownership. Next: JWT authentication.
 
+See the [current architecture](docs/architecture.md).
+
 ## How it has evolved
 
 | Run | Layer | Problem found | Change | Result |
