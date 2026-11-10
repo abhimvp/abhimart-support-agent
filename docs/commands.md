@@ -17,7 +17,7 @@ Run these from the project root.
 | Command | Purpose |
 | --- | --- |
 | `uv run fastapi dev app/main.py` | Start the API with auto-reload on http://127.0.0.1:8000 |
-| `uv run python -W ignore -m app.agent "Where is my order 1043?"` | Ask the agent one question from the terminal |
+| `uv run python -W ignore -m app.agent "Where is my order 1043?" 1001` | Ask the agent one question as customer 1001. Leave off the ID to act as a user who is not logged in |
 
 Useful pages while the API is running:
 
