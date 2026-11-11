@@ -1,14 +1,18 @@
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
 
+from app.auth import create_access_token, verify_password
+from app.models import Customer
 from app.db import engine, get_session
 from app.models import Order
 from app.order_service import OrderNotFound, get_order
-from app.schemas import ChatRequest, ChatResponse, OrderRead
+from app.schemas import ChatRequest, ChatResponse, OrderRead, Token
 from app.agent import graph
 
 from langchain_core.messages import HumanMessage
@@ -48,3 +52,19 @@ def chat(request: ChatRequest) -> ChatResponse:
         {"recursion_limit": 5},
     )
     return ChatResponse(reply=result["messages"][-1].text)
+
+
+@app.post("/auth/login", response_model=Token)
+def login(
+    form: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: Annotated[Session, Depends(get_session)],
+) -> Token:
+    customer = session.scalar(select(Customer).where(Customer.email == form.username))
+    hashed = customer.password_hash if customer else None
+    if not verify_password(form.password, hashed):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return Token(access_token=create_access_token(customer.id), token_type="bearer")

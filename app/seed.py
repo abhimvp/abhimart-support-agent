@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
-
+from app.auth import hash_password
 from app.db import SessionLocal
 from app.models import Customer, Order, OrderItem, Product
 
@@ -16,8 +16,18 @@ def days_ago(days: int) -> datetime:
 
 def seed(session: Session) -> None:
     rows = [
-        Customer(id=1001, name="Asha Rao", email="asha@example.com"),
-        Customer(id=1002, name="Ben Carter", email="ben@example.com"),
+        Customer(
+            id=1001,
+            name="Asha Rao",
+            email="asha@example.com",
+            password_hash=hash_password("asha-dev-pass"),
+        ),
+        Customer(
+            id=1002,
+            name="Ben Carter",
+            email="ben@example.com",
+            password_hash=hash_password("ben-dev-pass"),
+        ),
         Product(
             id=1, name="Whirl 500 Blender", category="general", price=Decimal("89.00")
         ),
