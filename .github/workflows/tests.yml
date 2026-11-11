@@ -1,0 +1,41 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**.md"]
+  pull_request:
+    paths-ignore: ["docs/**", "**.md"]
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: abhimart
+          POSTGRES_PASSWORD: abhimart
+          POSTGRES_DB: abhimart
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U abhimart -d abhimart"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql+psycopg://abhimart:abhimart@localhost:5432/abhimart
+      GEMINI_API_KEY: not-used-by-these-tests
+      JWT_SECRET: ci-only-secret-not-used-anywhere-else
+      LANGSMITH_TRACING: "false"
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv sync --locked
+      - run: uv run alembic upgrade head
+      - run: uv run python -m app.seed
+      - run: uv run pytest -v
