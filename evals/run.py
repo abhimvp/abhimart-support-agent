@@ -5,7 +5,7 @@ from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from app.agent import graph
+from app.agent import graph, RECURSION_LIMIT
 from app.config import settings
 
 CASES = json.loads((Path(__file__).parent / "cases.json").read_text(encoding="utf-8"))
@@ -16,7 +16,10 @@ PAUSE_SECONDS = 8
 def run_agent(message: str, customer_id: int | None) -> tuple[list[str], str]:
     result = graph.invoke(
         {"messages": [HumanMessage(message)]},
-        {"recursion_limit": 5, "configurable": {"customer_id": customer_id}},
+        {
+            "recursion_limit": RECURSION_LIMIT,
+            "configurable": {"customer_id": customer_id},
+        },
     )
     tools = [
         call["name"]

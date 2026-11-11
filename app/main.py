@@ -1,19 +1,22 @@
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
-
-from app.auth import create_access_token, verify_password
-from app.models import Customer
+from app.auth import (
+    CurrentCustomer,
+    create_access_token,
+    verify_password,
+    create_access_token,
+    verify_password,
+)
+from app.models import Customer, Order
 from app.db import engine, get_session
-from app.models import Order
-from app.order_service import OrderNotFound, get_order
+from app.order_service import OrderNotFound, get_customer_order
 from app.schemas import ChatRequest, ChatResponse, OrderRead, Token
-from app.agent import graph
+from app.agent import graph, RECURSION_LIMIT
 
 from langchain_core.messages import HumanMessage
 
@@ -37,19 +40,24 @@ def ready() -> dict[str, str]:
 
 @app.get("/orders/{order_id}", response_model=OrderRead)
 def read_order(
-    order_id: int, session: Annotated[Session, Depends(get_session)]
+    order_id: int,
+    customer_id: CurrentCustomer,
+    session: Annotated[Session, Depends(get_session)],
 ) -> Order:
     try:
-        return get_order(session, order_id)
+        return get_customer_order(session, order_id, customer_id)
     except OrderNotFound:
         raise HTTPException(status_code=404, detail="order not found")
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
+def chat(request: ChatRequest, customer_id: CurrentCustomer) -> ChatResponse:
     result = graph.invoke(
         {"messages": [HumanMessage(request.message)]},
-        {"recursion_limit": 5},
+        {
+            "recursion_limit": RECURSION_LIMIT,
+            "configurable": {"customer_id": customer_id},
+        },
     )
     return ChatResponse(reply=result["messages"][-1].text)
 

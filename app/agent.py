@@ -11,6 +11,8 @@ SYSTEM_PROMPT = """You are the customer support agent for abhimart, an online st
 Use your tools to look up orders. Never guess order details.
 Keep replies short and friendly."""
 
+RECURSION_LIMIT = 10
+
 model = get_llm().bind_tools(TOOLS)
 
 
@@ -35,9 +37,12 @@ if __name__ == "__main__":
     customer_id = int(sys.argv[2]) if len(sys.argv) > 2 else None
     result = graph.invoke(
         {"messages": [HumanMessage(sys.argv[1])]},
-        {"recursion_limit": 10, "configurable": {"customer_id": customer_id}},
+        {
+            "recursion_limit": RECURSION_LIMIT,
+            "configurable": {"customer_id": customer_id},
+        },
     )
-    
+
     for message in result["messages"]:
         if isinstance(message, AIMessage):
             for call in message.tool_calls:
