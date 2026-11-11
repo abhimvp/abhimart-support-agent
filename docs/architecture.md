@@ -1,47 +1,67 @@
 # Architecture
 
-Current state, before login. This page is updated as the system changes.
+Current state, with login. This page is updated as the system changes.
+
+Green boxes enforce a rule in code.
+
+## Request path
 
 ```mermaid
-flowchart TD
-    evals["Evals and terminal<br/>set the customer directly"]
-    chat["POST /chat<br/>not logged in yet"]
-    orders["GET /orders/{id}<br/>no ownership check yet"]
+flowchart LR
+    client(["Client"])
+    login["POST /auth/login"]
+    check["Token check"]
+    chat["POST /chat"]
+    orders["GET /orders/{id}"]
+    agent[["Agent loop"]]
+    service["Order service"]
+    db[("Postgres")]
 
-    subgraph loop["LangGraph loop"]
-        agent["agent node<br/>replies or requests a tool"]
-        tools["tools node<br/>runs lookup_order"]
-        agent -- requests a tool --> tools
-        tools -- tool result --> agent
-    end
-
-    gemini["Gemini 3.5 Flash Lite<br/>chooses tool, writes reply"]
-    service["Order service<br/>only this customer's orders"]
-    db[("Postgres<br/>customers, products, orders")]
-    langsmith["LangSmith<br/>traces and experiments"]
-
-    evals --> agent
+    client -- "email and password" --> login
+    login -- "JWT" --> client
+    client -- "JWT" --> check
+    check --> chat
+    check --> orders
     chat --> agent
-    agent <--> gemini
-    tools --> service
+    orders --> service
+    agent --> service
     service --> db
-    orders --> db
-    loop -.-> langsmith
 
     classDef enforced fill:#E1F5EE,stroke:#0F6E56,color:#085041
-    classDef gap fill:#FAECE7,stroke:#993C1D,color:#712B13
-    class service enforced
-    class chat,orders gap
+    class check,service enforced
 ```
 
-Teal marks a rule enforced in code. Coral marks a known gap that login will close.
+1. The client logs in with an email and password. The server checks the password hash and returns a signed JWT holding the customer ID, valid for 30 minutes.
+2. Every request to `/chat` or `/orders` sends the token. A missing, invalid or expired token gets a 401 before any route code runs.
+3. Both routes pass the customer ID from the token to the order service, which returns an order only if it belongs to that customer.
 
-## How a request flows
+## Inside the agent loop
 
-1. A request reaches the graph with a customer ID in its run configuration. The ID does not go through the model.
-2. The agent node calls Gemini with the system prompt, the conversation and the tool definition. Gemini either replies or requests `lookup_order` with an order number.
+```mermaid
+flowchart LR
+    caller(["/chat or evals"])
+    agent["agent node"]
+    gemini["Gemini"]
+    tools["tools node"]
+    service["Order service"]
+    db[("Postgres")]
+    langsmith["LangSmith"]
+
+    caller -- "message + customer ID" --> agent
+    agent <--> gemini
+    agent -- "tool call" --> tools
+    tools -- "result" --> agent
+    tools -- "customer ID" --> service
+    service --> db
+    agent -.-> langsmith
+
+    classDef enforced fill:#E1F5EE,stroke:#0F6E56,color:#085041
+    class service enforced
+```
+
+1. `/chat` puts the customer ID from the token into the run configuration. Evals and the terminal set the same value directly. It does not go through the model.
+2. The agent node sends the system prompt, the conversation and the tool definition to Gemini 3.5 Flash Lite, which either replies or requests `lookup_order` with an order number.
 3. The tools node runs `lookup_order`, which reads the customer ID from `ToolRuntime`. The model cannot see or change it.
-4. The order service queries Postgres for that order only if it belongs to that customer.
-5. The result goes back to the agent node, and Gemini writes the reply.
+4. The result goes back to the agent node, and Gemini writes the reply.
 
-Each run is limited by a recursion limit, and each run can be traced in LangSmith.
+Each agent run is limited to 10 graph steps, and each run can be traced in LangSmith.

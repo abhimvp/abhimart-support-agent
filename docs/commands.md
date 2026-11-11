@@ -27,6 +27,21 @@ Useful pages while the API is running:
 | http://127.0.0.1:8000/health | Liveness: is the app running? |
 | http://127.0.0.1:8000/health/ready | Readiness: can the app reach the database? |
 
+## Logging in
+
+`/chat` and `/orders` need a login token. In http://127.0.0.1:8000/docs, click **Authorize** and use one of the sample accounts created by `app.seed`:
+
+| Customer | Email | Password |
+| --- | --- | --- |
+| 1001 Asha Rao | `asha@example.com` | `asha-dev-pass` |
+| 1002 Ben Carter | `ben@example.com` | `ben-dev-pass` |
+
+To create a value for `JWT_SECRET` in `.env`:
+
+| Command | Purpose |
+| --- | --- |
+| `uv run python -c "import secrets; print(secrets.token_hex(32))"` | Generate a random secret for signing login tokens |
+
 ## Evals
 
 | Command | Purpose |
